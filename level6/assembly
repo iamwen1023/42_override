@@ -1,0 +1,156 @@
+08048748 <auth>:
+ 8048748:	55                   	push   ebp
+ 8048749:	89 e5                	mov    ebp,esp
+ 804874b:	83 ec 28             	sub    esp,0x28							; 40
+ 804874e:	c7 44 24 04 63 8a 04 	mov    DWORD PTR [esp+0x4],0x8048a63	; "\n"
+ 8048755:	08
+ 8048756:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]			; buff
+ 8048759:	89 04 24             	mov    DWORD PTR [esp],eax
+ 804875c:	e8 bf fd ff ff       	call   8048520 <strcspn@plt>			; strcspn(buff, "\n")
+ 8048761:	03 45 08             	add    eax,DWORD PTR [ebp+0x8]			; strcspn(...) += buff
+ 8048764:	c6 00 00             	mov    BYTE PTR [eax],0x0				; *(strcspn(...) + buff) = 0 <=> *strchr(buff, '\n') = 0;
+ 8048767:	c7 44 24 04 20 00 00 	mov    DWORD PTR [esp+0x4],0x20			; 32
+ 804876e:	00
+ 804876f:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]			; buff
+ 8048772:	89 04 24             	mov    DWORD PTR [esp],eax
+ 8048775:	e8 56 fe ff ff       	call   80485d0 <strnlen@plt>			; strnlen(buff, 32);
+ 804877a:	89 45 f4             	mov    DWORD PTR [ebp-0xc],eax          ; size_t size
+ 804877d:	50                   	push   eax
+ 804877e:	31 c0                	xor    eax,eax
+ 8048780:	74 03                	je     8048785 <auth+0x3d>              ; unconditionnal jump
+ 8048782:	83 c4 04             	add    esp,0x4                          ; esp 36
+ 8048785:	58                   	pop    eax                              ; size
+ 8048786:	83 7d f4 05          	cmp    DWORD PTR [ebp-0xc],0x5
+ 804878a:	7f 0a                	jg     8048796 <auth+0x4e>              ; if (size > 5)
+ 804878c:	b8 01 00 00 00       	mov    eax,0x1
+ 8048791:	e9 e1 00 00 00       	jmp    8048877 <auth+0x12f>             ; return (1);
+ 8048796:	c7 44 24 0c 00 00 00 	mov    DWORD PTR [esp+0xc],0x0
+ 804879d:	00
+ 804879e:	c7 44 24 08 01 00 00 	mov    DWORD PTR [esp+0x8],0x1
+ 80487a5:	00
+ 80487a6:	c7 44 24 04 00 00 00 	mov    DWORD PTR [esp+0x4],0x0
+ 80487ad:	00
+ 80487ae:	c7 04 24 00 00 00 00 	mov    DWORD PTR [esp],0x0
+ 80487b5:	e8 36 fe ff ff       	call   80485f0 <ptrace@plt>             ; ptrace(0, 0, 1, 0);
+ 80487ba:	83 f8 ff             	cmp    eax,0xffffffff                   ; if (ptrace(...) != -1)
+ 80487bd:	75 2e                	jne    80487ed <auth+0xa5>
+ 80487bf:	c7 04 24 68 8a 04 08 	mov    DWORD PTR [esp],0x8048a68        ; "\x1b[32m.---------------------------."
+ 80487c6:	e8 c5 fd ff ff       	call   8048590 <puts@plt>               ; puts(...)
+ 80487cb:	c7 04 24 8c 8a 04 08 	mov    DWORD PTR [esp],0x8048a8c        ; "\x1b[31m| !! TAMPERING DETECTED !!  |"
+ 80487d2:	e8 b9 fd ff ff       	call   8048590 <puts@plt>               ; puts(...)
+ 80487d7:	c7 04 24 b0 8a 04 08 	mov    DWORD PTR [esp],0x8048ab0        ; "\x1b[32m'---------------------------'"
+ 80487de:	e8 ad fd ff ff       	call   8048590 <puts@plt>               ; puts(...)
+ 80487e3:	b8 01 00 00 00       	mov    eax,0x1
+ 80487e8:	e9 8a 00 00 00       	jmp    8048877 <auth+0x12f>             ; return (1);
+ 80487ed:	8b 45 08             	mov    eax,DWORD PTR [ebp+0x8]
+ 80487f0:	83 c0 03             	add    eax,0x3							; char *local_buff = buff + 3;
+ 80487f3:	0f b6 00             	movzx  eax,BYTE PTR [eax]
+ 80487f6:	0f be c0             	movsx  eax,al							; char local_char = *local_buff;
+ 80487f9:	35 37 13 00 00       	xor    eax,0x1337						; char local_char = *local_buff ^ 4919
+ 80487fe:	05 ed ed 5e 00       	add    eax,0x5eeded						; char local_char = (*local_buff ^ 4919) + 0x5eeded
+ 8048803:	89 45 f0             	mov    DWORD PTR [ebp-0x10],eax
+ 8048806:	c7 45 ec 00 00 00 00 	mov    DWORD PTR [ebp-0x14],0x0			; int i = 0;
+ 804880d:	eb 4c                	jmp    804885b <auth+0x113>				; unconditionnal jump
+ 804880f:	8b 45 ec             	mov    eax,DWORD PTR [ebp-0x14]
+ 8048812:	03 45 08             	add    eax,DWORD PTR [ebp+0x8]			; i + buff
+ 8048815:	0f b6 00             	movzx  eax,BYTE PTR [eax]				; char c = *(i + buff)
+ 8048818:	3c 1f                	cmp    al,0x1f							; \x1f = 31
+ 804881a:	7f 07                	jg     8048823 <auth+0xdb>				; if (c > 31)
+ 804881c:	b8 01 00 00 00       	mov    eax,0x1
+ 8048821:	eb 54                	jmp    8048877 <auth+0x12f>             ; return (1);
+ 8048823:	8b 45 ec             	mov    eax,DWORD PTR [ebp-0x14]			; i
+ 8048826:	03 45 08             	add    eax,DWORD PTR [ebp+0x8]			; i + buff
+ 8048829:	0f b6 00             	movzx  eax,BYTE PTR [eax]				; int old_c = buff[i]
+ 804882c:	0f be c0             	movsx  eax,al
+ 804882f:	89 c1                	mov    ecx,eax
+ 8048831:	33 4d f0             	xor    ecx,DWORD PTR [ebp-0x10]			; old_c ^= local_char
+ 8048834:	ba 2b 3b 23 88       	mov    edx,0x88233b2b
+ 8048839:	89 c8                	mov    eax,ecx
+ 804883b:	f7 e2                	mul    edx								; 0x88233b2b * old_c (lower result stored in eax, and upper result of 64 bits in edx)
+ 804883d:	89 c8                	mov    eax,ecx                          ; old_c override the result in eax, so we still have edx present
+ 804883f:	29 d0                	sub    eax,edx							; int new_c = old_c - edx
+ 8048841:	d1 e8                	shr    eax,1							; new_c >>= 1
+ 8048843:	01 d0                	add    eax,edx							; new_c += edx
+ 8048845:	c1 e8 0a             	shr    eax,0xa							; new_c >>= 10
+ 8048848:	69 c0 39 05 00 00    	imul   eax,eax,0x539					; new_c *= 1337
+ 804884e:	89 ca                	mov    edx,ecx                          ; old_c
+ 8048850:	29 c2                	sub    edx,eax                          ; old_c -= new_c
+ 8048852:	89 d0                	mov    eax,edx                          ; new_c = old_c
+ 8048854:	01 45 f0             	add    DWORD PTR [ebp-0x10],eax         ; local_char += new_c
+ 8048857:	83 45 ec 01          	add    DWORD PTR [ebp-0x14],0x1         ; i++
+ 804885b:	8b 45 ec             	mov    eax,DWORD PTR [ebp-0x14]         ; i
+ 804885e:	3b 45 f4             	cmp    eax,DWORD PTR [ebp-0xc]          ; i < size
+ 8048861:	7c ac                	jl     804880f <auth+0xc7>              ; while (i < size)
+ 8048863:	8b 45 0c             	mov    eax,DWORD PTR [ebp+0xc]          ; serial
+ 8048866:	3b 45 f0             	cmp    eax,DWORD PTR [ebp-0x10]         ; serial == local_char
+ 8048869:	74 07                	je     8048872 <auth+0x12a>             ; return (0);
+ 804886b:	b8 01 00 00 00       	mov    eax,0x1
+ 8048870:	eb 05                	jmp    8048877 <auth+0x12f>             ; return (1);
+ 8048872:	b8 00 00 00 00       	mov    eax,0x0
+ 8048877:	c9                   	leave
+ 8048878:	c3                   	ret
+
+08048879 <main>:
+ 8048879:	55                   	push   ebp
+ 804887a:	89 e5                	mov    ebp,esp
+ 804887c:	83 e4 f0             	and    esp,0xfffffff0
+ 804887f:	83 ec 50             	sub    esp,0x50                 ; 80
+ 8048882:	8b 45 0c             	mov    eax,DWORD PTR [ebp+0xc]  ; argv
+ 8048885:	89 44 24 1c          	mov    DWORD PTR [esp+0x1c],eax ; char argv_copy[52]; (28)
+ 8048889:	65 a1 14 00 00 00    	mov    eax,gs:0x14              ; stack protector
+ 804888f:	89 44 24 4c          	mov    DWORD PTR [esp+0x4c],eax ; void *protector (76 - first arg)
+ 8048893:	31 c0                	xor    eax,eax                  ; eax = 0
+ 8048895:	50                   	push   eax
+ 8048896:	31 c0                	xor    eax,eax                  ; eax = 0;
+ 8048898:	74 03                	je     804889d <main+0x24>      ;
+ 804889a:	83 c4 04             	add    esp,0x4
+ 804889d:	58                   	pop    eax                      ; eax = 0
+ 804889e:	c7 04 24 d4 8a 04 08 	mov    DWORD PTR [esp],0x8048ad4    ; "***********************************"
+ 80488a5:	e8 e6 fc ff ff       	call   8048590 <puts@plt>           ; puts("**...")
+ 80488aa:	c7 04 24 f8 8a 04 08 	mov    DWORD PTR [esp],0x8048af8    ; "*\t\tlevel06\t\t  *"
+ 80488b1:	e8 da fc ff ff       	call   8048590 <puts@plt>           ; puts("*\t...")
+ 80488b6:	c7 04 24 d4 8a 04 08 	mov    DWORD PTR [esp],0x8048ad4
+ 80488bd:	e8 ce fc ff ff       	call   8048590 <puts@plt>           ; puts("**...")
+ 80488c2:	b8 08 8b 04 08       	mov    eax,0x8048b08                ; "-> Enter Login: "
+ 80488c7:	89 04 24             	mov    DWORD PTR [esp],eax
+ 80488ca:	e8 41 fc ff ff       	call   8048510 <printf@plt>         ; printf("-> Enter Login: ");
+ 80488cf:	a1 60 a0 04 08       	mov    eax,ds:0x804a060             ; ? ptr of stdin?
+ 80488d4:	89 44 24 08          	mov    DWORD PTR [esp+0x8],eax
+ 80488d8:	c7 44 24 04 20 00 00 	mov    DWORD PTR [esp+0x4],0x20     ; 32
+ 80488df:	00
+ 80488e0:	8d 44 24 2c          	lea    eax,[esp+0x2c]               ; char buff[16] (esp+44)
+ 80488e4:	89 04 24             	mov    DWORD PTR [esp],eax
+ 80488e7:	e8 64 fc ff ff       	call   8048550 <fgets@plt>          ; fgets(buff, 32, stdin)
+ 80488ec:	c7 04 24 d4 8a 04 08 	mov    DWORD PTR [esp],0x8048ad4
+ 80488f3:	e8 98 fc ff ff       	call   8048590 <puts@plt>           ; puts("**...")
+ 80488f8:	c7 04 24 1c 8b 04 08 	mov    DWORD PTR [esp],0x8048b1c    ; "***** NEW ACCOUNT DETECTED ********"
+ 80488ff:	e8 8c fc ff ff       	call   8048590 <puts@plt>           ; puts("**... NEW ...")
+ 8048904:	c7 04 24 d4 8a 04 08 	mov    DWORD PTR [esp],0x8048ad4
+ 804890b:	e8 80 fc ff ff       	call   8048590 <puts@plt>           ; puts("**...")
+ 8048910:	b8 40 8b 04 08       	mov    eax,0x8048b40                ; "-> Enter Serial: "
+ 8048915:	89 04 24             	mov    DWORD PTR [esp],eax
+ 8048918:	e8 f3 fb ff ff       	call   8048510 <printf@plt>         ; printf("-> Enter Serial: ")
+ 804891d:	b8 60 8a 04 08       	mov    eax,0x8048a60                ; "%u"
+ 8048922:	8d 54 24 28          	lea    edx,[esp+0x28]               ; int serial;
+ 8048926:	89 54 24 04          	mov    DWORD PTR [esp+0x4],edx
+ 804892a:	89 04 24             	mov    DWORD PTR [esp],eax
+ 804892d:	e8 ae fc ff ff       	call   80485e0 <__isoc99_scanf@plt> ; __isoc99_scanf("%u", serial);
+ 8048932:	8b 44 24 28          	mov    eax,DWORD PTR [esp+0x28]
+ 8048936:	89 44 24 04          	mov    DWORD PTR [esp+0x4],eax      ; serial
+ 804893a:	8d 44 24 2c          	lea    eax,[esp+0x2c]               ; buff
+ 804893e:	89 04 24             	mov    DWORD PTR [esp],eax
+ 8048941:	e8 02 fe ff ff       	call   8048748 <auth>               ; auth(buff, serial)
+ 8048946:	85 c0                	test   eax,eax
+ 8048948:	75 1f                	jne    8048969 <main+0xf0>			; if (auth(...) != 0)
+ 804894a:	c7 04 24 52 8b 04 08 	mov    DWORD PTR [esp],0x8048b52	; "Authenticated!"
+ 8048951:	e8 3a fc ff ff       	call   8048590 <puts@plt>			; puts("Aut...")
+ 8048956:	c7 04 24 61 8b 04 08 	mov    DWORD PTR [esp],0x8048b61
+ 804895d:	e8 3e fc ff ff       	call   80485a0 <system@plt>			; system("/bin/sh");
+ 8048962:	b8 00 00 00 00       	mov    eax,0x0						; 0
+ 8048967:	eb 05                	jmp    804896e <main+0xf5>
+ 8048969:	b8 01 00 00 00       	mov    eax,0x1						; 1
+ 804896e:	8b 54 24 4c          	mov    edx,DWORD PTR [esp+0x4c]		; protector
+ 8048972:	65 33 15 14 00 00 00 	xor    edx,DWORD PTR gs:0x14		; protector ^ real_protector
+ 8048979:	74 05                	je     8048980 <main+0x107>			; return;
+ 804897b:	e8 00 fc ff ff       	call   8048580 <__stack_chk_fail@plt>
+ 8048980:	c9                   	leave
