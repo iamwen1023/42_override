@@ -6,7 +6,7 @@ Dump of assembler code for function main:
    0x080484d4 <+4>:	push   %ebx
    0x080484d5 <+5>:	and    $0xfffffff0,%esp
    0x080484d8 <+8>:	sub    $0x60,%esp
-
+- Function Prologue
    0x080484db <+11>:	lea    0x1c(%esp),%ebx
    0x080484df <+15>:	mov    $0x0,%eax
    0x080484e4 <+20>:	mov    $0x10,%edx
@@ -68,26 +68,41 @@ Dump of assembler code for function verify_user_name:
    0x08048465 <+1>:	mov    %esp,%ebp
    0x08048467 <+3>:	push   %edi
    0x08048468 <+4>:	push   %esi
-   0x08048469 <+5>:	sub    $0x10,%esp
+   0x08048469 <+5>:	sub    $0x10,%esp 
+- Allocates 16 bytes on the stack for local variables.
    0x0804846c <+8>:	movl   $0x8048690,(%esp)
    0x08048473 <+15>:	call   0x8048380 <puts@plt>
+- Calls the puts function to print the string   
    0x08048478 <+20>:	mov    $0x804a040,%edx
    0x0804847d <+25>:	mov    $0x80486a8,%eax
    0x08048482 <+30>:	mov    $0x7,%ecx
    0x08048487 <+35>:	mov    %edx,%esi
    0x08048489 <+37>:	mov    %eax,%edi
+- Sets the comparison length to 7 bytes (the length of the username).
+- mov %edx, %esi: Copies the user input address into the esi register.
+- mov %eax, %edi: Copies the expected username address into the edi register.
    0x0804848b <+39>:	repz cmpsb %es:(%edi),%ds:(%esi)
+- Compares the strings byte by byte
    0x0804848d <+41>:	seta   %dl
    0x08048490 <+44>:	setb   %al
+- Sets the dl register to 1 if the user input is greater than the expected username (unsigned comparison).
+- Sets the al register to 1 if the user input is less than the expected username (unsigned comparison)
    0x08048493 <+47>:	mov    %edx,%ecx
    0x08048495 <+49>:	sub    %al,%cl
    0x08048497 <+51>:	mov    %ecx,%eax
    0x08048499 <+53>:	movsbl %al,%eax
+- If the strings are equal, both flags are 0, and the result is 0.
+- If the user input is greater, the result is 1.
+- If the user input is less, the result is -1.
    0x0804849c <+56>:	add    $0x10,%esp
    0x0804849f <+59>:	pop    %esi
    0x080484a0 <+60>:	pop    %edi
    0x080484a1 <+61>:	pop    %ebp
-   0x080484a2 <+62>:	ret    
+   0x080484a2 <+62>:	ret 
+- Deallocates the 16 bytes of local variables
+- Restores the saved values of the esi and edi registers
+- Restores the base pointer of the previous stack frame
+- Returns to the caller, with the result of the comparison in the eax register
 End of assembler dump.
 
 (gdb) disas verify_user_pass
@@ -96,13 +111,18 @@ Dump of assembler code for function verify_user_pass:
    0x080484a4 <+1>:	mov    %esp,%ebp
    0x080484a6 <+3>:	push   %edi
    0x080484a7 <+4>:	push   %esi
+-  Function Prologue and Saves the values of the edi and esi registers 
    0x080484a8 <+5>:	mov    0x8(%ebp),%eax
    0x080484ab <+8>:	mov    %eax,%edx
+- Loading Parameters into edx register.
    0x080484ad <+10>:	mov    $0x80486b0,%eax
    0x080484b2 <+15>:	mov    $0x5,%ecx
    0x080484b7 <+20>:	mov    %edx,%esi
    0x080484b9 <+22>:	mov    %eax,%edi
+- Setting Up for String Comparison Copies the user-provided password address into the esi register.
+- Copies the expected password address into the edi register
    0x080484bb <+24>:	repz cmpsb %es:(%edi),%ds:(%esi)
+- Compares the strings byte by byte
    0x080484bd <+26>:	seta   %dl
    0x080484c0 <+29>:	setb   %al
    0x080484c3 <+32>:	mov    %edx,%ecx
