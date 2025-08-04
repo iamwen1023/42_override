@@ -16,7 +16,9 @@ Dump of assembler code for function main:
    0x0000000000400840 <+44>:    mov    %rdi,%rdx
    0x0000000000400843 <+47>:    mov    %eax,(%rdx)
    0x0000000000400845 <+49>:    add    $0x4,%rdx
+- Increment rdx by 4 bytes to point to the next slot in buffer1
    0x0000000000400849 <+53>:    lea    -0xa0(%rbp),%rdx
+- Load address of buffer3 into rdx, which is 160 bytes below rbp
    0x0000000000400850 <+60>:    mov    $0x0,%eax
    0x0000000000400855 <+65>:    mov    $0x5,%ecx
    0x000000000040085a <+70>:    mov    %rdx,%rdi
@@ -26,6 +28,7 @@ Dump of assembler code for function main:
    0x0000000000400863 <+79>:    mov    %al,(%rdx)
    0x0000000000400865 <+81>:    add    $0x1,%rdx
    0x0000000000400869 <+85>:    lea    -0x110(%rbp),%rdx
+- Load address of buffer2 into rdx, which is 272 bytes below rbp
    0x0000000000400870 <+92>:    mov    $0x0,%eax
    0x0000000000400875 <+97>:    mov    $0xc,%ecx
    0x000000000040087a <+102>:   mov    %rdx,%rdi
