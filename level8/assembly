@@ -1,0 +1,233 @@
+level08@OverRide:~$ ls -lR
+.:
+total 16
+drwxrwx---+ 1 level09 users    60 Oct 19  2016 backups
+-rwsr-s---+ 1 level09 users 12975 Oct 19  2016 level08
+
+./backups:
+total 0
+```
+
+There is the asssembly code of the `level08` executable:
+
+```
+00000000004008c4 <log_wrapper>: ; void log_wrapper(FILE *file_ptr, char *message, char *file_name)
+  4008c4:	55                   	push   rbp
+  4008c5:	48 89 e5             	mov    rbp,rsp
+  4008c8:	48 81 ec 30 01 00 00 	sub    rsp,0x130                  ; 304
+  4008cf:	48 89 bd e8 fe ff ff 	mov    QWORD PTR [rbp-0x118],rdi  ; file_ptr
+  4008d6:	48 89 b5 e0 fe ff ff 	mov    QWORD PTR [rbp-0x120],rsi  ; message
+  4008dd:	48 89 95 d8 fe ff ff 	mov    QWORD PTR [rbp-0x128],rdx  ; file_name
+  4008e4:	64 48 8b 04 25 28 00 	mov    rax,QWORD PTR fs:0x28      ; stack protector
+  4008eb:	00 00
+  4008ed:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+  4008f1:	31 c0                	xor    eax,eax
+  4008f3:	48 8b 95 e0 fe ff ff 	mov    rdx,QWORD PTR [rbp-0x120]  ; message
+  4008fa:	48 8d 85 f0 fe ff ff 	lea    rax,[rbp-0x110]            ; char str_copy[272]
+  400901:	48 89 d6             	mov    rsi,rdx
+  400904:	48 89 c7             	mov    rdi,rax
+  400907:	e8 e4 fd ff ff       	call   4006f0 <strcpy@plt>        ; strcpy(str_copy, message);
+  40090c:	48 8b b5 d8 fe ff ff 	mov    rsi,QWORD PTR [rbp-0x128]  ; file_name
+  400913:	48 8d 85 f0 fe ff ff 	lea    rax,[rbp-0x110]            ; str_copy
+  40091a:	48 c7 85 d0 fe ff ff 	mov    QWORD PTR [rbp-0x130],0xffffffffffffffff ; -1
+  400921:	ff ff ff ff
+  400925:	48 89 c2             	mov    rdx,rax
+  400928:	b8 00 00 00 00       	mov    eax,0x0
+  40092d:	48 8b 8d d0 fe ff ff 	mov    rcx,QWORD PTR [rbp-0x130]
+  400934:	48 89 d7             	mov    rdi,rdx
+  400937:	f2 ae                	repnz scas al,BYTE PTR es:[rdi]
+  400939:	48 89 c8             	mov    rax,rcx
+  40093c:	48 f7 d0             	not    rax                        ; strlen(str_copy)
+  40093f:	48 8d 50 ff          	lea    rdx,[rax-0x1]              ; rdx = strlen(str_copy) - 1
+  400943:	b8 fe 00 00 00       	mov    eax,0xfe                   ; 254
+  400948:	49 89 c0             	mov    r8,rax
+  40094b:	49 29 d0             	sub    r8,rdx                     ; 254 - (strlen(str_copy) - 1) = 255 - strlen(str_copy)
+  40094e:	48 8d 85 f0 fe ff ff 	lea    rax,[rbp-0x110]            ; str_copy
+  400955:	48 c7 85 d0 fe ff ff 	mov    QWORD PTR [rbp-0x130],0xffffffffffffffff ; -1
+  40095c:	ff ff ff ff
+  400960:	48 89 c2             	mov    rdx,rax
+  400963:	b8 00 00 00 00       	mov    eax,0x0
+  400968:	48 8b 8d d0 fe ff ff 	mov    rcx,QWORD PTR [rbp-0x130]
+  40096f:	48 89 d7             	mov    rdi,rdx
+  400972:	f2 ae                	repnz scas al,BYTE PTR es:[rdi]
+  400974:	48 89 c8             	mov    rax,rcx
+  400977:	48 f7 d0             	not    rax
+  40097a:	48 8d 50 ff          	lea    rdx,[rax-0x1]            ; strlen(str_copy) - 1
+  40097e:	48 8d 85 f0 fe ff ff 	lea    rax,[rbp-0x110]          ; str_copy
+  400985:	48 01 d0             	add    rax,rdx                  ; str_copy += strlen(str_copy) - 1
+  400988:	48 89 f2             	mov    rdx,rsi                  ; file_name
+  40098b:	4c 89 c6             	mov    rsi,r8
+  40098e:	48 89 c7             	mov    rdi,rax
+  400991:	b8 00 00 00 00       	mov    eax,0x0
+  400996:	e8 a5 fd ff ff       	call   400740 <snprintf@plt>    ; snprintf(str_copy + (strlen(str_copy) - 1), 255 - strlen(str_copy), file_name)
+  40099b:	48 8d 85 f0 fe ff ff 	lea    rax,[rbp-0x110]          ; str_copy
+  4009a2:	be 4c 0d 40 00       	mov    esi,0x400d4c             ; "\n"
+  4009a7:	48 89 c7             	mov    rdi,rax
+  4009aa:	e8 d1 fd ff ff       	call   400780 <strcspn@plt>     ; strcspn(str_copy, "\n")
+  4009af:	c6 84 05 f0 fe ff ff 	mov    BYTE PTR [rbp+rax*1-0x110],0x0 ; *(str_copy + strcspn(str_copy, "\n")) = 0 <=> *strchr(str_copy, '\n') = 0
+  4009b6:	00
+  4009b7:	b9 4e 0d 40 00       	mov    ecx,0x400d4e             ; "LOG: %s\n"
+  4009bc:	48 8d 95 f0 fe ff ff 	lea    rdx,[rbp-0x110]          ; str_copy
+  4009c3:	48 8b 85 e8 fe ff ff 	mov    rax,QWORD PTR [rbp-0x118]  ; file_ptr
+  4009ca:	48 89 ce             	mov    rsi,rcx                  ; "LOG: %s\n"
+  4009cd:	48 89 c7             	mov    rdi,rax
+  4009d0:	b8 00 00 00 00       	mov    eax,0x0
+  4009d5:	e8 c6 fd ff ff       	call   4007a0 <fprintf@plt>     ; fprintf(file_ptr, "LOG: %s\n", str_copy)
+  4009da:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]  ; stack protection
+  4009de:	64 48 33 04 25 28 00 	xor    rax,QWORD PTR fs:0x28
+  4009e5:	00 00
+  4009e7:	74 05                	je     4009ee <log_wrapper+0x12a>
+  4009e9:	e8 32 fd ff ff       	call   400720 <__stack_chk_fail@plt>
+  4009ee:	c9                   	leave
+  4009ef:	c3                   	ret                             ; return
+
+00000000004009f0 <main>:
+  4009f0:	55                   	push   rbp
+  4009f1:	48 89 e5             	mov    rbp,rsp
+  4009f4:	48 81 ec b0 00 00 00 	sub    rsp,0xb0                     ; 176
+  4009fb:	89 bd 6c ff ff ff    	mov    DWORD PTR [rbp-0x94],edi     ; argc
+  400a01:	48 89 b5 60 ff ff ff 	mov    QWORD PTR [rbp-0xa0],rsi     ; **argv
+  400a08:	64 48 8b 04 25 28 00 	mov    rax,QWORD PTR fs:0x28        ; stack protector
+  400a0f:	00 00
+  400a11:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+  400a15:	31 c0                	xor    eax,eax                      ; eax = 0
+  400a17:	c6 45 8f ff          	mov    BYTE PTR [rbp-0x71],0xff     ; char letter[1] = {255};
+  400a1b:	c7 45 88 ff ff ff ff 	mov    DWORD PTR [rbp-0x78],0xffffffff  ; rbp-120 ; rsb+58 = -1
+  400a22:	83 bd 6c ff ff ff 02 	cmp    DWORD PTR [rbp-0x94],0x2     ; edi = 2?
+  400a29:	74 1f                	je     400a4a <main+0x5a>           ; if (argc == 2)
+  400a2b:	48 8b 85 60 ff ff ff 	mov    rax,QWORD PTR [rbp-0xa0]     ; rsi
+  400a32:	48 8b 10             	mov    rdx,QWORD PTR [rax]          ; *rsi
+  400a35:	b8 57 0d 40 00       	mov    eax,0x400d57                 ; "Usage: %s filename\n"
+  400a3a:	48 89 d6             	mov    rsi,rdx
+  400a3d:	48 89 c7             	mov    rdi,rax
+  400a40:	b8 00 00 00 00       	mov    eax,0x0
+  400a45:	e8 e6 fc ff ff       	call   400730 <printf@plt>          ; printf("Usage: %s filename\n", *argv);
+  400a4a:	ba 6b 0d 40 00       	mov    edx,0x400d6b                 ; "w"
+  400a4f:	b8 6d 0d 40 00       	mov    eax,0x400d6d                 ; "./backups/.log"
+  400a54:	48 89 d6             	mov    rsi,rdx
+  400a57:	48 89 c7             	mov    rdi,rax
+  400a5a:	e8 61 fd ff ff       	call   4007c0 <fopen@plt>           ; fopen("./backups/.log", "w")
+  400a5f:	48 89 85 78 ff ff ff 	mov    QWORD PTR [rbp-0x88],rax     ; FILE *log = fopen("./backups/.log", "w");
+  400a66:	48 83 bd 78 ff ff ff 	cmp    QWORD PTR [rbp-0x88],0x0
+  400a6d:	00
+  400a6e:	75 21                	jne    400a91 <main+0xa1>           ; if (log)
+  400a70:	b8 7c 0d 40 00       	mov    eax,0x400d7c                 ; "ERROR: Failed to open %s\n"
+  400a75:	be 6d 0d 40 00       	mov    esi,0x400d6d                 ; "./backups/.log"
+  400a7a:	48 89 c7             	mov    rdi,rax
+  400a7d:	b8 00 00 00 00       	mov    eax,0x0
+  400a82:	e8 a9 fc ff ff       	call   400730 <printf@plt>          ; printf("ERROR: Failed to open %s\n", "./backups/.log");
+  400a87:	bf 01 00 00 00       	mov    edi,0x1
+  400a8c:	e8 3f fd ff ff       	call   4007d0 <exit@plt>            ; exit(1);
+  400a91:	48 8b 85 60 ff ff ff 	mov    rax,QWORD PTR [rbp-0xa0]     ; argv
+  400a98:	48 83 c0 08          	add    rax,0x8                      ; argv + 1
+  400a9c:	48 8b 10             	mov    rdx,QWORD PTR [rax]          ; argv[1]
+  400a9f:	48 8b 85 78 ff ff ff 	mov    rax,QWORD PTR [rbp-0x88]     ; log
+  400aa6:	be 96 0d 40 00       	mov    esi,0x400d96                 ; "Starting back up: "
+  400aab:	48 89 c7             	mov    rdi,rax
+  400aae:	e8 11 fe ff ff       	call   4008c4 <log_wrapper>         ; log_wrapper(log, "Starting back up: ", argv[1]);
+  400ab3:	ba a9 0d 40 00       	mov    edx,0x400da9                 ; "r"
+  400ab8:	48 8b 85 60 ff ff ff 	mov    rax,QWORD PTR [rbp-0xa0]     ; argv
+  400abf:	48 83 c0 08          	add    rax,0x8
+  400ac3:	48 8b 00             	mov    rax,QWORD PTR [rax]          ; argv[1]
+  400ac6:	48 89 d6             	mov    rsi,rdx
+  400ac9:	48 89 c7             	mov    rdi,rax
+  400acc:	e8 ef fc ff ff       	call   4007c0 <fopen@plt>           ; FILE *read_file = fopen(argv[1], "r");
+  400ad1:	48 89 45 80          	mov    QWORD PTR [rbp-0x80],rax
+  400ad5:	48 83 7d 80 00       	cmp    QWORD PTR [rbp-0x80],0x0
+  400ada:	75 2d                	jne    400b09 <main+0x119>          ; if (read_file)
+  400adc:	48 8b 85 60 ff ff ff 	mov    rax,QWORD PTR [rbp-0xa0]     ; argv
+  400ae3:	48 83 c0 08          	add    rax,0x8
+  400ae7:	48 8b 10             	mov    rdx,QWORD PTR [rax]          ; argv[1]
+  400aea:	b8 7c 0d 40 00       	mov    eax,0x400d7c
+  400aef:	48 89 d6             	mov    rsi,rdx
+  400af2:	48 89 c7             	mov    rdi,rax
+  400af5:	b8 00 00 00 00       	mov    eax,0x0
+  400afa:	e8 31 fc ff ff       	call   400730 <printf@plt>          ; printf("ERROR: Failed to open %s\n", argv[1]);
+  400aff:	bf 01 00 00 00       	mov    edi,0x1
+  400b04:	e8 c7 fc ff ff       	call   4007d0 <exit@plt>            ; exit(1);
+  400b09:	ba ab 0d 40 00       	mov    edx,0x400dab                 ; "./backups/"
+  400b0e:	48 8d 45 90          	lea    rax,[rbp-0x70]               ; char path[64];
+  400b12:	48 8b 0a             	mov    rcx,QWORD PTR [rdx]          ; "./backups/"
+  400b15:	48 89 08             	mov    QWORD PTR [rax],rcx          ; memset(path, "./backup", 8);
+  400b18:	0f b7 4a 08          	movzx  ecx,WORD PTR [rdx+0x8]       ; "s/\0"
+  400b1c:	66 89 48 08          	mov    WORD PTR [rax+0x8],cx        ; memset(path + 8, "s/\0", 2);
+  400b20:	0f b6 52 0a          	movzx  edx,BYTE PTR [rdx+0xa]       ; "\0"
+  400b24:	88 50 0a             	mov    BYTE PTR [rax+0xa],dl        ; memset(path + 10, "\0", 1);
+  400b27:	48 8d 45 90          	lea    rax,[rbp-0x70]               ; path                        <=> strcpy(path, "./backups/")
+  400b2b:	48 c7 85 58 ff ff ff 	mov    QWORD PTR [rbp-0xa8],0xffffffffffffffff  ; -1
+  400b32:	ff ff ff ff
+  400b36:	48 89 c2             	mov    rdx,rax
+  400b39:	b8 00 00 00 00       	mov    eax,0x0
+  400b3e:	48 8b 8d 58 ff ff ff 	mov    rcx,QWORD PTR [rbp-0xa8]
+  400b45:	48 89 d7             	mov    rdi,rdx
+  400b48:	f2 ae                	repnz scas al,BYTE PTR es:[rdi]
+  400b4a:	48 89 c8             	mov    rax,rcx
+  400b4d:	48 f7 d0             	not    rax                                      ; strlen(path)
+  400b50:	48 8d 50 ff          	lea    rdx,[rax-0x1]                            ; strlen(path) - 1
+  400b54:	b8 63 00 00 00       	mov    eax,0x63                                 ; 99
+  400b59:	48 89 c1             	mov    rcx,rax                                  ; 99
+  400b5c:	48 29 d1             	sub    rcx,rdx                                  ; 99 - (strlen(path) - 1) = 100 - strlen(path)
+  400b5f:	48 89 ca             	mov    rdx,rcx                                  ; '
+  400b62:	48 8b 85 60 ff ff ff 	mov    rax,QWORD PTR [rbp-0xa0]                 ; argv
+  400b69:	48 83 c0 08          	add    rax,0x8                                  ; argv + 1
+  400b6d:	48 8b 00             	mov    rax,QWORD PTR [rax]                      ; argv[1]
+  400b70:	48 89 c1             	mov    rcx,rax                                  ; argv[1]
+  400b73:	48 8d 45 90          	lea    rax,[rbp-0x70]                           ; path
+  400b77:	48 89 ce             	mov    rsi,rcx                                  ; argv[1]
+  400b7a:	48 89 c7             	mov    rdi,rax
+  400b7d:	e8 ce fb ff ff       	call   400750 <strncat@plt>                     ; strncat(path, argv[1], 100 - strlen(path))
+  400b82:	48 8d 45 90          	lea    rax,[rbp-0x70]                           ; path
+  400b86:	ba b0 01 00 00       	mov    edx,0x1b0                                ; 432
+  400b8b:	be c1 00 00 00       	mov    esi,0xc1                                 ; 193
+  400b90:	48 89 c7             	mov    rdi,rax
+  400b93:	b8 00 00 00 00       	mov    eax,0x0
+  400b98:	e8 13 fc ff ff       	call   4007b0 <open@plt>                        ; open(path, 193, 432)
+  400b9d:	89 45 88             	mov    DWORD PTR [rbp-0x78],eax                 ; int fd = open(path, 193, 432)
+  400ba0:	83 7d 88 00          	cmp    DWORD PTR [rbp-0x78],0x0                 ; if (fd >= 0) ; explicit: if (fd >> 31 == 0) ; if the signed bit is 0
+  400ba4:	79 47                	jns    400bed <main+0x1fd>
+  400ba6:	48 8b 85 60 ff ff ff 	mov    rax,QWORD PTR [rbp-0xa0]
+  400bad:	48 83 c0 08          	add    rax,0x8
+  400bb1:	48 8b 10             	mov    rdx,QWORD PTR [rax]                      ; argv[1]
+  400bb4:	b8 b6 0d 40 00       	mov    eax,0x400db6                             ; "ERROR: Failed to open %s%s\n"
+  400bb9:	be ab 0d 40 00       	mov    esi,0x400dab                             ; "./backups/"
+  400bbe:	48 89 c7             	mov    rdi,rax
+  400bc1:	b8 00 00 00 00       	mov    eax,0x0
+  400bc6:	e8 65 fb ff ff       	call   400730 <printf@plt>                      ; printf("ERROR: Failed to open %s%s\n", "./backups/", argv[1])
+  400bcb:	bf 01 00 00 00       	mov    edi,0x1
+  400bd0:	e8 fb fb ff ff       	call   4007d0 <exit@plt>                        ; exit(1)
+  400bd5:	48 8d 4d 8f          	lea    rcx,[rbp-0x71]                           ; letter
+  400bd9:	8b 45 88             	mov    eax,DWORD PTR [rbp-0x78]                 ; fd
+  400bdc:	ba 01 00 00 00       	mov    edx,0x1                                  ; 1
+  400be1:	48 89 ce             	mov    rsi,rcx                                  ; letter
+  400be4:	89 c7                	mov    edi,eax                                  ; fd
+  400be6:	e8 15 fb ff ff       	call   400700 <write@plt>                       ; write(fd, letter, 1);
+  400beb:	eb 01                	jmp    400bee <main+0x1fe>                      ; unconditionnal jump
+  400bed:	90                   	nop
+  400bee:	48 8b 45 80          	mov    rax,QWORD PTR [rbp-0x80]                 ; read_file
+  400bf2:	48 89 c7             	mov    rdi,rax
+  400bf5:	e8 66 fb ff ff       	call   400760 <fgetc@plt>                       ; fgetc(read_file);
+  400bfa:	88 45 8f             	mov    BYTE PTR [rbp-0x71],al                   ; *letter = fgetc(read_file);
+  400bfd:	0f b6 45 8f          	movzx  eax,BYTE PTR [rbp-0x71]
+  400c01:	3c ff                	cmp    al,0xff
+  400c03:	75 d0                	jne    400bd5 <main+0x1e5>                      ; while (*letter != EOF)
+  400c05:	48 8b 85 60 ff ff ff 	mov    rax,QWORD PTR [rbp-0xa0]
+  400c0c:	48 83 c0 08          	add    rax,0x8
+  400c10:	48 8b 10             	mov    rdx,QWORD PTR [rax]                      ; argv[1]
+  400c13:	48 8b 85 78 ff ff ff 	mov    rax,QWORD PTR [rbp-0x88]                 ; log
+  400c1a:	be d2 0d 40 00       	mov    esi,0x400dd2                             ; "Finished back up "
+  400c1f:	48 89 c7             	mov    rdi,rax                                  ; log
+  400c22:	e8 9d fc ff ff       	call   4008c4 <log_wrapper>                     ; log_wrapper(log, "Finished back up ", argv[1])
+  400c27:	48 8b 45 80          	mov    rax,QWORD PTR [rbp-0x80]                 ; read_file
+  400c2b:	48 89 c7             	mov    rdi,rax
+  400c2e:	e8 dd fa ff ff       	call   400710 <fclose@plt>                      ; fclose(read_file);
+  400c33:	8b 45 88             	mov    eax,DWORD PTR [rbp-0x78]                 ; fd
+  400c36:	89 c7                	mov    edi,eax
+  400c38:	e8 33 fb ff ff       	call   400770 <close@plt>                       ; close(fd)
+  400c3d:	b8 00 00 00 00       	mov    eax,0x0
+  400c42:	48 8b 7d f8          	mov    rdi,QWORD PTR [rbp-0x8]                  ; stack protector
+  400c46:	64 48 33 3c 25 28 00 	xor    rdi,QWORD PTR fs:0x28
+  400c4d:	00 00
+  400c4f:	74 05                	je     400c56 <main+0x266>
+  400c51:	e8 ca fa ff ff       	call   400720 <__stack_chk_fail@plt>
+  400c56:	c9                   	leave
+  400c57:	c3                   	ret                                             ; return (0);
