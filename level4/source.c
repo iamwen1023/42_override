@@ -31,12 +31,11 @@ int main() {
     // Assembly: call fork@plt
     // fork() - Create a child process, returns PID in parent, 0 in child
     child_pid = fork();
-    
     // Assembly: lea 0x20(%esp),%ebx; mov $0x0,%eax; mov $0x20,%edx; mov %ebx,%edi; mov %edx,%ecx; rep stos %eax,%es:(%edi)
     // Initialize buffer with zeros using rep stos (repeat store string)
     // This clears the 32-byte buffer (8 integers)
     for (int i = 0; i < 8; i++) {
-        buffer[i] = 0;
+        buffer[i] = 0; 
     }
     
     // Assembly: cmpl $0x0,0xac(%esp); jne 0x8048769
@@ -67,7 +66,7 @@ int main() {
         
     } else {
         // PARENT PROCESS - Monitor child for debugging attempts
-        
+        wait_loop:  // ← LOOP LABEL (assembly: 0x8048768)
         // Assembly: lea 0x1c(%esp),%eax; mov %eax,(%esp); call wait@plt
         // wait(&wait_status) - Wait for child to finish or be stopped
         wait(&wait_status);
@@ -112,39 +111,3 @@ int main() {
     // Function epilogue: return 0
     return 0;
 }
-
-/*
- * ANTI-DEBUGGING MECHANISMS EXPLAINED:
- * 
- * 1. FORK() PROTECTION:
- *    - Creates child process to handle user input
- *    - Parent monitors child for debugging attempts
- *    - If debugger detected, child is killed
- * 
- * 2. PTRACE PROTECTION:
- *    - Child calls ptrace(PTRACE_TRACEME, 0, 0, 0)
- *    - This allows only ONE debugger to attach
- *    - If another debugger tries to attach, it fails
- * 
- * 3. PTRACE DETECTION:
- *    - Parent tries to read child's memory with ptrace(PTRACE_PEEKDATA)
- *    - If debugger is attached, this operation fails
- *    - Parent checks return value to detect debugger
- * 
- * 4. VULNERABILITY:
- *    - gets() function has no bounds checking
- *    - Buffer overflow can overwrite return address
- *    - Shellcode can be injected to bypass protection
- * 
- * 5. EXPLOITATION STRATEGY:
- *    - Inject shellcode into buffer
- *    - Overflow buffer to overwrite return address
- *    - Point return address to shellcode in buffer
- *    - Execute shellcode to get shell
- * 
- * 6. BYPASSING ANTI-DEBUGGING:
- *    - Use shellcode instead of debugging
- *    - Buffer overflow bypasses ptrace protection
- *    - Direct code execution in child process
- */
-
